@@ -1,0 +1,896 @@
+type: masonry
+title: Solar
+path: solar
+icon: mdi:solar-power
+cards:
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: |
+          # SOFAR HYD-3600-EP
+          Solar inverter, battery, grid, load, export, and BMS monitoring.
+      - type: grid
+        title: System Overview
+        columns: 3
+        square: false
+        cards:
+          - type: tile
+            entity: sensor.solar_esp32_sofar_system_state
+            name: System State
+            color: green
+          - type: tile
+            entity: sensor.solar_esp32_sofar_system_state_code
+            name: State Code
+          - type: tile
+            entity: sensor.solar_esp32_sofar_grid_frequency
+            name: Grid Frequency
+          - type: tile
+            entity: sensor.solar_esp32_sofar_generation_time_today
+            name: Gen Time Today
+          - type: tile
+            entity: sensor.solar_esp32_sofar_countdown
+            name: Countdown
+          - type: tile
+            entity: sensor.solar_esp32_sofar_output_active_power_total
+            name: Inverter Out
+            color: green
+  - type: grid
+    title: Live Power Summary
+    columns: 3
+    square: false
+    cards:
+      - type: tile
+        entity: sensor.solar_esp32_sofar_pv1_power
+        name: PV1
+        color: amber
+      - type: tile
+        entity: sensor.solar_esp32_sofar_pv2_power
+        name: PV2
+        color: amber
+      - type: tile
+        entity: sensor.solar_esp32_sofar_battery_power
+        name: Battery
+        color: blue
+      - type: tile
+        entity: sensor.solar_esp32_sofar_system_load_power
+        name: Load
+        color: red
+      - type: tile
+        entity: sensor.solar_esp32_sofar_pcc_active_power_total
+        name: Grid / PCC
+      - type: tile
+        entity: sensor.solar_esp32_sofar_output_active_power_total
+        name: Inverter Out
+        color: green
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Live Power Flow
+      show_states: true
+      colorize_states: true
+    graph_span: 2h
+    update_interval: 10s
+    now:
+      show: true
+      label: Now
+    apex_config:
+      chart:
+        height: 420
+        toolbar:
+          show: false
+        zoom:
+          enabled: false
+      stroke:
+        width: 2
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+        horizontalAlign: left
+      tooltip:
+        shared: true
+        x:
+          format: HH:mm
+      yaxis:
+        decimalsInFloat: 0
+        labels:
+          formatter: EVAL:function(val) { return Math.round(val) + ' W'; }
+      grid:
+        borderColor: "#ffffff10"
+      xaxis:
+        tooltip:
+          enabled: false
+    series:
+      - entity: sensor.solar_esp32_sofar_pv1_power
+        name: PV1
+        type: area
+        color: "#f59e0b"
+        opacity: 0.35
+        group_by:
+          duration: 1min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_pv2_power
+        name: PV2
+        type: area
+        color: "#fbbf24"
+        opacity: 0.35
+        group_by:
+          duration: 1min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_battery_power
+        name: Battery
+        type: line
+        color: "#3b82f6"
+        group_by:
+          duration: 1min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_system_load_power
+        name: Load
+        type: line
+        color: "#ef4444"
+        group_by:
+          duration: 1min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_pcc_active_power_total
+        name: Grid / PCC
+        type: line
+        color: "#8b5cf6"
+        group_by:
+          duration: 1min
+          func: avg
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: PV Production - Last 12 Hours
+      show_states: true
+      colorize_states: true
+    graph_span: 12h
+    update_interval: 30s
+    apex_config:
+      chart:
+        height: 360
+        toolbar:
+          show: false
+      stroke:
+        width: 2
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: HH:mm
+      yaxis:
+        decimalsInFloat: 0
+        labels:
+          formatter: EVAL:function(val) { return Math.round(val) + ' W'; }
+      grid:
+        borderColor: "#ffffff10"
+    series:
+      - entity: sensor.solar_esp32_sofar_pv1_power
+        name: PV1 Power
+        type: area
+        color: "#f59e0b"
+        opacity: 0.45
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_pv2_power
+        name: PV2 Power
+        type: area
+        color: "#fbbf24"
+        opacity: 0.45
+        group_by:
+          duration: 5min
+          func: avg
+  - type: entities
+    title: PV Details
+    show_header_toggle: false
+    entities:
+      - entity: sensor.solar_esp32_sofar_pv1_voltage
+        name: PV1 Voltage
+      - entity: sensor.solar_esp32_sofar_pv1_current
+        name: PV1 Current
+      - entity: sensor.solar_esp32_sofar_pv1_power
+        name: PV1 Power
+      - entity: sensor.solar_esp32_sofar_pv2_voltage
+        name: PV2 Voltage
+      - entity: sensor.solar_esp32_sofar_pv2_current
+        name: PV2 Current
+      - entity: sensor.solar_esp32_sofar_pv2_power
+        name: PV2 Power
+  - type: vertical-stack
+    cards:
+      - type: gauge
+        entity: sensor.solar_esp32_sofar_battery_soc
+        name: Battery SOC
+        min: 0
+        max: 100
+        needle: true
+        severity:
+          green: 60
+          yellow: 30
+          red: 0
+      - type: entities
+        title: Battery Details
+        show_header_toggle: false
+        entities:
+          - entity: sensor.solar_esp32_sofar_battery_soc
+            name: SOC
+          - entity: sensor.solar_esp32_sofar_battery_soh
+            name: SOH
+          - entity: sensor.solar_esp32_sofar_battery_voltage
+            name: Voltage
+          - entity: sensor.solar_esp32_sofar_battery_current
+            name: Current
+          - entity: sensor.solar_esp32_sofar_battery_power
+            name: Power
+          - entity: sensor.solar_esp32_sofar_battery_temperature
+            name: Temperature
+          - entity: sensor.solar_esp32_sofar_battery_charge_cycles
+            name: Charge Cycles
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Battery SOC & Power - Last 12 Hours
+      show_states: true
+      colorize_states: true
+    graph_span: 12h
+    update_interval: 30s
+    apex_config:
+      chart:
+        height: 360
+        toolbar:
+          show: false
+      stroke:
+        width: 2
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: HH:mm
+      grid:
+        borderColor: "#ffffff10"
+    yaxis:
+      - id: soc
+        min: 0
+        max: 100
+        decimals: 0
+        opposite: true
+      - id: power
+        decimals: 0
+    series:
+      - entity: sensor.solar_esp32_sofar_battery_soc
+        name: Battery SOC
+        type: line
+        color: "#22c55e"
+        yaxis_id: soc
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_battery_power
+        name: Battery Power
+        type: area
+        color: "#3b82f6"
+        opacity: 0.35
+        yaxis_id: power
+        group_by:
+          duration: 5min
+          func: avg
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Grid / Inverter Power - Last 12 Hours
+      show_states: true
+      colorize_states: true
+    graph_span: 12h
+    update_interval: 30s
+    apex_config:
+      chart:
+        height: 360
+        toolbar:
+          show: false
+      stroke:
+        width: 2
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: HH:mm
+      yaxis:
+        decimalsInFloat: 0
+        labels:
+          formatter: EVAL:function(val) { return Math.round(val) + ' W'; }
+      grid:
+        borderColor: "#ffffff10"
+    series:
+      - entity: sensor.solar_esp32_sofar_pcc_active_power_total
+        name: Grid / PCC
+        type: line
+        color: "#8b5cf6"
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_output_active_power_total
+        name: Inverter Output
+        type: line
+        color: "#22c55e"
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_system_load_power
+        name: System Load
+        type: area
+        color: "#ef4444"
+        opacity: 0.25
+        group_by:
+          duration: 5min
+          func: avg
+  - type: entities
+    title: Grid Details
+    show_header_toggle: false
+    entities:
+      - entity: sensor.solar_esp32_sofar_grid_voltage_r
+        name: Voltage R
+      - entity: sensor.solar_esp32_sofar_grid_frequency
+        name: Frequency
+      - entity: sensor.solar_esp32_sofar_pcc_active_power_total
+        name: PCC Power
+      - entity: sensor.solar_esp32_sofar_pcc_current_r
+        name: PCC Current R
+      - entity: sensor.solar_esp32_sofar_output_active_power_total
+        name: Output Power
+      - entity: sensor.solar_esp32_sofar_output_active_power_r
+        name: Output Power R
+      - entity: sensor.solar_esp32_sofar_output_current_r
+        name: Output Current R
+      - entity: sensor.solar_export_second_meter
+        name: Export Meter
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Load Power - Last 12 Hours
+      show_states: true
+      colorize_states: true
+    graph_span: 12h
+    update_interval: 30s
+    apex_config:
+      chart:
+        height: 360
+        toolbar:
+          show: false
+      stroke:
+        width: 2
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: HH:mm
+      yaxis:
+        decimalsInFloat: 0
+        labels:
+          formatter: EVAL:function(val) { return Math.round(val) + ' W'; }
+      grid:
+        borderColor: "#ffffff10"
+    series:
+      - entity: sensor.solar_esp32_sofar_system_load_power
+        name: System Load
+        type: area
+        color: "#ef4444"
+        opacity: 0.35
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_load_active_power_total
+        name: Load Total
+        type: line
+        color: "#f97316"
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_load_active_power_r
+        name: Load R
+        type: line
+        color: "#fb923c"
+        group_by:
+          duration: 5min
+          func: avg
+  - type: entities
+    title: Load Details
+    show_header_toggle: false
+    entities:
+      - entity: sensor.solar_esp32_sofar_system_load_power
+        name: System Load
+      - entity: sensor.solar_esp32_sofar_load_active_power_total
+        name: Load Total
+      - entity: sensor.solar_esp32_sofar_load_active_power_r
+        name: Load R
+      - entity: sensor.solar_esp32_sofar_load_current_r
+        name: Current R
+      - entity: sensor.solar_esp32_sofar_output_voltage_r
+        name: Output Voltage R
+      - entity: sensor.solar_esp32_sofar_output_frequency
+        name: Output Frequency
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Grid Draw Energy - Daily & Monthly Cycle
+      show_states: true
+      colorize_states: true
+    graph_span: 30d
+    update_interval: 5min
+    apex_config:
+      chart:
+        height: 360
+        toolbar:
+          show: false
+      stroke:
+        width:
+          - 0
+          - 3
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: dd MMM
+      yaxis:
+        decimalsInFloat: 2
+        labels:
+          formatter: EVAL:function(val) { return Number(val).toFixed(2) + ' kWh'; }
+      grid:
+        borderColor: "#ffffff10"
+      plotOptions:
+        bar:
+          borderRadius: 4
+          columnWidth: 70%
+    series:
+      - entity: sensor.energy_day_a
+        name: Daily Grid Draw
+        type: column
+        color: "#ef4444"
+        group_by:
+          duration: 1d
+          func: max
+      - entity: sensor.current_monthly_energy_a
+        name: Monthly Cycle Grid Draw
+        type: line
+        color: "#f59e0b"
+        group_by:
+          duration: 1d
+          func: max
+  - type: entities
+    title: Grid Draw & Export Readings
+    show_header_toggle: false
+    entities:
+      - entity: sensor.energy_day_a
+        name: Daily Grid Draw
+      - entity: sensor.current_monthly_energy_a
+        name: Monthly Cycle Grid Draw
+      - entity: sensor.solar_export_second_meter
+        name: Second Meter Solar Export
+      - entity: sensor.solar_export_first_meter
+        name: First Meter Solar Export
+      - entity: sensor.shellyem3_e8db84d68e3c_channel_a_energy_returned
+        name: Second Meter Returned to Grid Lifetime
+      - entity: sensor.shellyem3_e8db84d68e3c_channel_c_energy_returned
+        name: First Meter Returned to Grid Lifetime
+  - type: entities
+    title: Temperatures
+    show_header_toggle: false
+    entities:
+      - entity: sensor.solar_esp32_sofar_ambient_temperature
+        name: Ambient
+      - entity: sensor.solar_esp32_sofar_heatsink_temperature
+        name: Heatsink
+      - entity: sensor.solar_esp32_sofar_inverter_temperature
+        name: Inverter
+      - entity: sensor.solar_esp32_sofar_battery_temperature
+        name: Battery
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: System Temperatures - Last 24 Hours
+      show_states: true
+      colorize_states: true
+    graph_span: 24h
+    update_interval: 60s
+    apex_config:
+      chart:
+        height: 360
+        toolbar:
+          show: false
+      stroke:
+        width: 2
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: HH:mm
+      yaxis:
+        decimalsInFloat: 1
+        labels:
+          formatter: EVAL:function(val) { return Number(val).toFixed(1) + ' °C'; }
+      grid:
+        borderColor: "#ffffff10"
+    series:
+      - entity: sensor.solar_esp32_sofar_ambient_temperature
+        name: Ambient
+        type: line
+        color: "#22d3ee"
+        group_by:
+          duration: 10min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_heatsink_temperature
+        name: Heatsink
+        type: line
+        color: "#f97316"
+        group_by:
+          duration: 10min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_inverter_temperature
+        name: Inverter
+        type: line
+        color: "#ef4444"
+        group_by:
+          duration: 10min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_battery_temperature
+        name: Battery
+        type: line
+        color: "#3b82f6"
+        group_by:
+          duration: 10min
+          func: avg
+  - type: vertical-stack
+    cards:
+      - type: gauge
+        entity: sensor.solar_esp32_sofar_bms_soc
+        name: BMS SOC
+        min: 0
+        max: 100
+        needle: true
+        severity:
+          green: 60
+          yellow: 30
+          red: 0
+      - type: entities
+        title: BMS Data
+        show_header_toggle: false
+        entities:
+          - entity: sensor.solar_esp32_sofar_bms_realtime_capacity
+            name: Realtime Capacity
+          - entity: sensor.solar_esp32_sofar_bms_total_voltage
+            name: Total Voltage
+          - entity: sensor.solar_esp32_sofar_bms_total_current
+            name: Total Current
+          - entity: sensor.solar_esp32_sofar_bms_average_temperature
+            name: Avg Temperature
+          - entity: sensor.solar_esp32_sofar_bms_soc
+            name: BMS SOC
+          - entity: sensor.solar_esp32_sofar_bms_soh
+            name: BMS SOH
+  - type: entities
+    title: Faults & Diagnostics
+    show_header_toggle: false
+    entities:
+      - entity: sensor.solar_esp32_sofar_fault_1
+        name: Fault 1
+      - entity: sensor.solar_esp32_sofar_fault_2
+        name: Fault 2
+      - entity: sensor.solar_esp32_sofar_fault_3
+        name: Fault 3
+      - entity: sensor.solar_esp32_sofar_fault_4
+        name: Fault 4
+      - entity: sensor.solar_esp32_sofar_insulation_resistance
+        name: Insulation Resistance
+  - type: grid
+    title: Solcast Forecast
+    columns: 3
+    square: false
+    cards:
+      - type: tile
+        entity: sensor.solcast_pv_forecast_power_now
+        name: Forecast Now
+        color: amber
+      - type: tile
+        entity: sensor.solcast_pv_forecast_power_in_30_minutes
+        name: In 30 Min
+        color: amber
+      - type: tile
+        entity: sensor.solcast_pv_forecast_power_in_1_hour
+        name: In 1 Hour
+        color: amber
+      - type: tile
+        entity: sensor.solcast_pv_forecast_forecast_today
+        name: Forecast Today
+        color: green
+      - type: tile
+        entity: sensor.solcast_pv_forecast_forecast_tomorrow
+        name: Tomorrow
+        color: green
+      - type: tile
+        entity: sensor.solcast_pv_forecast_peak_forecast_today
+        name: Peak Today
+        color: orange
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Solcast Forecast vs PV Power - Last 24 Hours
+      show_states: true
+      colorize_states: true
+    graph_span: 24h
+    update_interval: 1min
+    now:
+      show: true
+      label: Now
+    apex_config:
+      chart:
+        height: 380
+        toolbar:
+          show: false
+        zoom:
+          enabled: false
+      stroke:
+        width: 2
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: HH:mm
+      yaxis:
+        decimalsInFloat: 0
+        labels:
+          formatter: EVAL:function(val) { return Math.round(val) + ' W'; }
+      grid:
+        borderColor: "#ffffff10"
+    series:
+      - entity: sensor.solar_esp32_sofar_pv1_power
+        name: PV1 Actual
+        type: area
+        color: "#f59e0b"
+        opacity: 0.35
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_pv2_power
+        name: PV2 Actual
+        type: area
+        color: "#fbbf24"
+        opacity: 0.35
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solcast_pv_forecast_power_now
+        name: Solcast Now
+        type: line
+        color: "#22c55e"
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solcast_pv_forecast_power_in_30_minutes
+        name: Solcast +30m
+        type: line
+        color: "#06b6d4"
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solcast_pv_forecast_power_in_1_hour
+        name: Solcast +1h
+        type: line
+        color: "#3b82f6"
+        group_by:
+          duration: 5min
+          func: avg
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Solar Export MTD - First & Second Meters
+      show_states: true
+      colorize_states: true
+    graph_span: 32d
+    span:
+      start: month
+    update_interval: 5min
+    apex_config:
+      chart:
+        height: 360
+        toolbar:
+          show: false
+      stroke:
+        width: 3
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: dd MMM
+      yaxis:
+        decimalsInFloat: 2
+        labels:
+          formatter: EVAL:function(val) { return Number(val).toFixed(2) + ' kWh'; }
+      grid:
+        borderColor: "#ffffff10"
+    series:
+      - entity: sensor.solar_export_second_meter
+        name: Second Meter Export MTD
+        type: line
+        color: "#06b6d4"
+        group_by:
+          duration: 1d
+          func: max
+      - entity: sensor.solar_export_first_meter
+        name: First Meter Export MTD
+        type: line
+        color: "#22c55e"
+        group_by:
+          duration: 1d
+          func: max
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Returned to Grid - Daily Export
+      show_states: true
+      colorize_states: true
+    graph_span: 30d
+    update_interval: 5min
+    apex_config:
+      chart:
+        height: 360
+        toolbar:
+          show: false
+      stroke:
+        width: 0
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: dd MMM
+      plotOptions:
+        bar:
+          borderRadius: 4
+          columnWidth: 70%
+      yaxis:
+        decimalsInFloat: 2
+        labels:
+          formatter: EVAL:function(val) { return Number(val).toFixed(2) + ' kWh'; }
+      grid:
+        borderColor: "#ffffff10"
+    series:
+      - entity: sensor.shellyem3_e8db84d68e3c_channel_a_energy_returned
+        name: Second Meter Returned
+        type: column
+        color: "#06b6d4"
+        group_by:
+          duration: 1d
+          func: diff
+      - entity: sensor.shellyem3_e8db84d68e3c_channel_c_energy_returned
+        name: First Meter Returned
+        type: column
+        color: "#22c55e"
+        group_by:
+          duration: 1d
+          func: diff
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Grid Voltage & Frequency - Last 24 Hours
+      show_states: true
+      colorize_states: true
+    graph_span: 24h
+    update_interval: 1min
+    apex_config:
+      chart:
+        height: 360
+        toolbar:
+          show: false
+      stroke:
+        width: 2
+        curve: smooth
+      dataLabels:
+        enabled: false
+      legend:
+        show: true
+        position: top
+      tooltip:
+        shared: true
+        x:
+          format: HH:mm
+      grid:
+        borderColor: "#ffffff10"
+    yaxis:
+      - id: voltage
+        show: true
+        decimals: 1
+        apex_config:
+          title:
+            text: Voltage (V)
+      - id: frequency
+        show: true
+        opposite: true
+        decimals: 2
+        apex_config:
+          title:
+            text: Frequency (Hz)
+    series:
+      - entity: sensor.solar_esp32_sofar_grid_voltage_r
+        name: Grid Voltage R
+        type: line
+        color: "#f59e0b"
+        yaxis_id: voltage
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_grid_frequency
+        name: Grid Frequency
+        type: line
+        color: "#22c55e"
+        yaxis_id: frequency
+        group_by:
+          duration: 5min
+          func: avg
+      - entity: sensor.solar_esp32_sofar_output_frequency
+        name: Output Frequency
+        type: line
+        color: "#3b82f6"
+        yaxis_id: frequency
+        group_by:
+          duration: 5min
+          func: avg
+  - type: entity-filter
+    title: Active SOFAR Faults
+    show_empty: false
+    entities:
+      - entity: sensor.solar_esp32_sofar_fault_1
+        name: Fault 1
+      - entity: sensor.solar_esp32_sofar_fault_2
+        name: Fault 2
+      - entity: sensor.solar_esp32_sofar_fault_3
+        name: Fault 3
+      - entity: sensor.solar_esp32_sofar_fault_4
+        name: Fault 4
+    state_filter:
+      - operator: "!="
+        value: "0.0"
