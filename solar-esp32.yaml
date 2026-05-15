@@ -1,0 +1,671 @@
+esphome:
+  name: solar-esp32
+  friendly_name: SOFAR HYD-3600-EP
+
+esp8266:
+  board: nodemcuv2
+
+logger:
+  level: DEBUG
+  baud_rate: 0
+
+api:
+  encryption:
+    key: "inyJEz6NwxxrhJxxEYqODkIzCE/4sbgZmg/t6GKyKyA="
+
+ota:
+  - platform: esphome
+    password: "7c739ea25f7bea73129c3be243c54c0b"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  min_auth_mode: WPA2
+  power_save_mode: none
+
+  ap:
+    ssid: "Solar-Esp8266 Fallback Hotspot"
+    password: "0oOay7RTgOpk"
+
+captive_portal:
+
+# Wiring:
+# NodeMCU D7 / GPIO13  -> MAX485 DI
+# NodeMCU D6 / GPIO12  <- MAX485 RO
+# NodeMCU D5 / GPIO14  -> MAX485 DE + RE
+# NodeMCU G            -> MAX485 GND
+# NodeMCU 3V/VIN       -> MAX485 VCC, according to your module
+#
+# MAX485 A             -> SOFAR Pin 5
+# MAX485 B             -> SOFAR Pin 6
+
+uart:
+  id: uart_sofar
+  tx_pin: GPIO13
+  rx_pin: GPIO12
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+  debug:
+    direction: BOTH
+    dummy_receiver: false
+
+modbus:
+  id: modbus_sofar
+  uart_id: uart_sofar
+  flow_control_pin: GPIO14
+  send_wait_time: 1000ms
+
+modbus_controller:
+  - id: sofar_inverter
+    address: 0x01
+    modbus_id: modbus_sofar
+    setup_priority: -10
+    update_interval: 10s
+    command_throttle: 500ms
+    max_cmd_retries: 1
+
+sensor:
+  # =========================
+  # System / Status
+  # =========================
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR System State Code"
+    id: sofar_system_state_code
+    register_type: holding
+    address: 0x0404
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Fault 1"
+    id: sofar_fault_1
+    register_type: holding
+    address: 0x0405
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Fault 2"
+    id: sofar_fault_2
+    register_type: holding
+    address: 0x0406
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Fault 3"
+    id: sofar_fault_3
+    register_type: holding
+    address: 0x0407
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Fault 4"
+    id: sofar_fault_4
+    register_type: holding
+    address: 0x0408
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Countdown"
+    id: sofar_countdown
+    register_type: holding
+    address: 0x0417
+    value_type: U_WORD
+    unit_of_measurement: "s"
+    device_class: duration
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Ambient Temperature"
+    id: sofar_ambient_temperature
+    register_type: holding
+    address: 0x0418
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Heatsink Temperature"
+    id: sofar_heatsink_temperature
+    register_type: holding
+    address: 0x041A
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Inverter Temperature"
+    id: sofar_inverter_temperature
+    register_type: holding
+    address: 0x0420
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Generation Time Today"
+    id: sofar_generation_time_today
+    register_type: holding
+    address: 0x0426
+    value_type: U_WORD
+    unit_of_measurement: "min"
+    device_class: duration
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Insulation Resistance"
+    id: sofar_insulation_resistance
+    register_type: holding
+    address: 0x042B
+    value_type: U_WORD
+    unit_of_measurement: "kΩ"
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # =========================
+  # Grid / AC Output
+  # =========================
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Grid Frequency"
+    id: sofar_grid_frequency
+    register_type: holding
+    address: 0x0484
+    value_type: U_WORD
+    unit_of_measurement: "Hz"
+    device_class: frequency
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Output Active Power Total"
+    id: sofar_output_active_power_total
+    register_type: holding
+    address: 0x0485
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - multiply: 10
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR PCC Active Power Total"
+    id: sofar_pcc_active_power_total
+    register_type: holding
+    address: 0x0488
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - multiply: 10
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Grid Voltage R"
+    id: sofar_grid_voltage_r
+    register_type: holding
+    address: 0x048D
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Output Current R"
+    id: sofar_output_current_r
+    register_type: holding
+    address: 0x048E
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Output Active Power R"
+    id: sofar_output_active_power_r
+    register_type: holding
+    address: 0x048F
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - multiply: 10
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR PCC Current R"
+    id: sofar_pcc_current_r
+    register_type: holding
+    address: 0x0492
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  # =========================
+  # Load / EPS Output
+  # =========================
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR System Load Power"
+    id: sofar_system_load_power
+    register_type: holding
+    address: 0x04AF
+    value_type: U_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - multiply: 10
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Load Active Power Total"
+    id: sofar_load_active_power_total
+    register_type: holding
+    address: 0x0504
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - multiply: 10
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Output Frequency"
+    id: sofar_output_frequency
+    register_type: holding
+    address: 0x0507
+    value_type: U_WORD
+    unit_of_measurement: "Hz"
+    device_class: frequency
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Output Voltage R"
+    id: sofar_output_voltage_r
+    register_type: holding
+    address: 0x050A
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Load Current R"
+    id: sofar_load_current_r
+    register_type: holding
+    address: 0x050B
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Load Active Power R"
+    id: sofar_load_active_power_r
+    register_type: holding
+    address: 0x050C
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - multiply: 10
+
+  # =========================
+  # PV Input
+  # =========================
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR PV1 Voltage"
+    id: sofar_pv1_voltage
+    register_type: holding
+    address: 0x0584
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR PV1 Current"
+    id: sofar_pv1_current
+    register_type: holding
+    address: 0x0585
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR PV1 Power"
+    id: sofar_pv1_power
+    register_type: holding
+    address: 0x0586
+    value_type: U_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - multiply: 10
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR PV2 Voltage"
+    id: sofar_pv2_voltage
+    register_type: holding
+    address: 0x0587
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR PV2 Current"
+    id: sofar_pv2_current
+    register_type: holding
+    address: 0x0588
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR PV2 Power"
+    id: sofar_pv2_power
+    register_type: holding
+    address: 0x0589
+    value_type: U_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - multiply: 10
+
+  # =========================
+  # Battery Input
+  # =========================
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Battery Voltage"
+    id: sofar_battery_voltage
+    register_type: holding
+    address: 0x0604
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Battery Current"
+    id: sofar_battery_current
+    register_type: holding
+    address: 0x0605
+    value_type: S_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 0.01
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Battery Power"
+    id: sofar_battery_power
+    register_type: holding
+    address: 0x0606
+    value_type: S_WORD
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+    filters:
+      - multiply: 10
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Battery Temperature"
+    id: sofar_battery_temperature
+    register_type: holding
+    address: 0x0607
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Battery SOC"
+    id: sofar_battery_soc
+    register_type: holding
+    address: 0x0608
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Battery SOH"
+    id: sofar_battery_soh
+    register_type: holding
+    address: 0x0609
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR Battery Charge Cycles"
+    id: sofar_battery_charge_cycles
+    register_type: holding
+    address: 0x060A
+    value_type: U_WORD
+    unit_of_measurement: "cycle"
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # =========================
+  # BMS values, if available
+  # =========================
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR BMS Realtime Capacity"
+    id: sofar_bms_realtime_capacity
+    register_type: holding
+    address: 0x900E
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR BMS Total Voltage"
+    id: sofar_bms_total_voltage
+    register_type: holding
+    address: 0x900F
+    value_type: U_WORD
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR BMS Total Current"
+    id: sofar_bms_total_current
+    register_type: holding
+    address: 0x9010
+    value_type: U_WORD
+    unit_of_measurement: "A"
+    device_class: current
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR BMS Average Temperature"
+    id: sofar_bms_average_temperature
+    register_type: holding
+    address: 0x9011
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR BMS SOC"
+    id: sofar_bms_soc
+    register_type: holding
+    address: 0x9012
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: sofar_inverter
+    name: "SOFAR BMS SOH"
+    id: sofar_bms_soh
+    register_type: holding
+    address: 0x9013
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    state_class: measurement
+    accuracy_decimals: 0
+
+text_sensor:
+  - platform: template
+    name: "SOFAR System State"
+    id: sofar_system_state_text
+    lambda: |-
+      if (isnan(id(sofar_system_state_code).state)) {
+        return {"Unknown"};
+      }
+
+      int state = (int) id(sofar_system_state_code).state;
+
+      switch (state) {
+        case 0:
+          return {"Wait"};
+        case 1:
+          return {"Check"};
+        case 2:
+          return {"On Grid"};
+        case 3:
+          return {"EPS"};
+        case 4:
+          return {"Error"};
+        case 5:
+          return {"Permanent Error"};
+        case 6:
+          return {"Firmware Updating"};
+        case 7:
+          return {"Self Charging"};
+        default:
+          return {"Unknown"};
+      }
+    update_interval: 10s
