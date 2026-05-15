@@ -4,7 +4,7 @@ Configuration files for reading SOFAR inverter data through Modbus using an ESP 
 
 This project was tested with a **SOFAR HYD-3600-EP** inverter. It may also work with other SOFAR models, but some Modbus register addresses may need to be changed depending on the inverter model and firmware version.
 
-![SOFAR Home Assistant Dashboard](Screenshot 2026-05-15 213648.jpg)
+![SOFAR Home Assistant Dashboard](./Screenshot%202026-05-15%20213648.jpg)
 
 ## What this project includes
 
